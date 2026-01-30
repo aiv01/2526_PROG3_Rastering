@@ -8,5 +8,5 @@ public:
     void Update(float delta_time);
     void Destroy();
     Screen* _screen;
-    PerspectiveCamera* _camera;
+    ACamera* _camera;
 };

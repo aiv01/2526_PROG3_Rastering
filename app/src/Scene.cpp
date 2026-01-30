@@ -7,6 +7,7 @@ Scene::Scene(int w, int h)
 { 
     _screen = new Screen(w, h);
     _camera = new PerspectiveCamera(w, h, 60.f);
+    //_camera = new OrthographicCamera(w, h, 5.f);
 }
 
 void Scene::Update(float delta_time) 
