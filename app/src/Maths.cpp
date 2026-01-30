@@ -1,6 +1,11 @@
 #include "Maths.h"
 #include <algorithm>
 
+Vector3f Vector3f::operator-(const Vector3f& other) const {
+    return {x - other.x, y - other.y, z - other.z};
+}
+
+
 namespace Maths {
 
     int min3(int a, int b, int c) 

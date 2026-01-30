@@ -5,7 +5,17 @@ struct Vector2i {
     int y;
 };
 
+struct Vector3f {
+    float x;
+    float y;
+    float z;
+
+    Vector3f operator-(const Vector3f& other) const;
+};
+
 namespace Maths {
+
+    const float PI2 = 3.1415926f;
 
     /// @brief Get the min value among the 3 values.
     int min3(int a, int b, int c);
