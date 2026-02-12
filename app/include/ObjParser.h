@@ -66,10 +66,13 @@ class Tokenizer
 
 class ObjParser
 { 
-    private:
+    
+private:
+
     ObjParser(){}
 
-    public:
+public:
+
     static bool TryParse(const std::string &path, MeshObj &outObj)
     {
         std::ifstream file(path);
@@ -81,8 +84,6 @@ class ObjParser
         std::vector<Float3> points;
         std::vector<Float3> normals;
         std::vector<Float2> uvs;
-        
-
 
         while(std::getline(file,line)) // return true if file is readable
         {
@@ -95,6 +96,8 @@ class ObjParser
 
             if(tokens[0] == "v") // starts parsing data from "v" tokens
             {
+                if (tokens.size() != 4) return false;
+
                 Float3 v;
                 try
                 {
@@ -113,9 +116,10 @@ class ObjParser
                 points.push_back(v);
                 
             }
-
             else if(tokens[0] == "vt") // starts parsing data from "vt" tokens
             {
+                if (tokens.size() != 3) return false;
+
                 Float2 vt;
                 try
                 {
@@ -131,9 +135,10 @@ class ObjParser
                 uvs.push_back(vt);
                 
             }
-
             else if(tokens[0] == "vn") // starts parsing data from "vn" tokens
             {
+                if (tokens.size() != 4) return false;
+
                 Float3 vn;
                 try
                 {
@@ -150,17 +155,62 @@ class ObjParser
                 normals.push_back(vn);
                 
             }
-            
+            else if (tokens[0] == "f")
+            {
+                if (tokens.size() != 4) return false;
 
+                auto vertex0 = Tokenizer::Split(tokens[1], '/');
+                auto vertex1 = Tokenizer::Split(tokens[2], '/');
+                auto vertex2 = Tokenizer::Split(tokens[3], '/');
+
+                if (vertex0.size() != 3 || vertex1.size() != 3 || vertex2.size() != 3) return false;
+                
+                Triangle t;
+                try // Vertex 0
+                {
+                    const int VIndex0 = std::stoi(vertex0[0]) - 1;
+                    const int VIndex1 = std::stoi(vertex0[1]) - 1;
+                    const int VIndex2 = std::stoi(vertex0[2]) - 1;
+
+                    t.v1 = {points[VIndex0], uvs[VIndex1], normals[VIndex2]};
+                }
+                catch(const std::exception& e)
+                {
+                    return false;
+                }
+
+                try // Vertex 1
+                {
+                    const int VIndex0 = std::stoi(vertex1[0]) - 1;
+                    const int VIndex1 = std::stoi(vertex1[1]) - 1;
+                    const int VIndex2 = std::stoi(vertex1[2]) - 1;
+
+                    t.v2 = {points[VIndex0], uvs[VIndex1], normals[VIndex2]};
+                }
+                catch(const std::exception& e)
+                {
+                    return false;
+                }
+
+                try // Vertex 2
+                {
+                    const int VIndex0 = std::stoi(vertex2[0]) - 1;
+                    const int VIndex1 = std::stoi(vertex2[1]) - 1;
+                    const int VIndex2 = std::stoi(vertex2[2]) - 1;
+
+                    t.v3 = {points[VIndex0], uvs[VIndex1], normals[VIndex2]};
+                }
+                catch(const std::exception& e)
+                {
+                    return false;
+                }
+                
+                outObj.triangles.push_back(t);
+            }
         }                              
-        
 
         return true;
     }
-
-
-
-    
     
 };
 
