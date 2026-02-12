@@ -15,4 +15,23 @@ CLOVE_TEST(VLineWrongDigit) {
     CLOVE_IS_FALSE(result);
 }
 
+CLOVE_TEST(VLineSize)
+{
+    MeshObj mesh;
+    bool result = ObjParser::TryParse("resources/vlinesize.obj", mesh);
+    CLOVE_IS_FALSE(result);
+}
 
+CLOVE_TEST(FLineSize)
+{
+    MeshObj mesh;
+    bool result = ObjParser::TryParse("resources/flinesize.obj", mesh);
+    CLOVE_IS_FALSE(result);
+}
+
+CLOVE_TEST(FLineWrongDigit)
+{
+    MeshObj mesh;
+    bool result = ObjParser::TryParse("resources/fwrongdigit.obj", mesh);
+    CLOVE_IS_FALSE(result);
+}
