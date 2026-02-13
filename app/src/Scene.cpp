@@ -3,6 +3,7 @@
 #include "Maths.h"
 #include "ShapeRasterizer.h"
 #include "ObjParser.h"
+#include "ScanlineRasterizer.h"
 
 Scene::Scene(int w, int h) 
 { 
@@ -73,6 +74,38 @@ void draw_suzanne(Obj& obj, bool wireframe, float deltaTime, ACamera* camera, Sc
     }
 }
 
+void draw_suzanne_scanline(Obj& obj, float deltaTime, ACamera* camera, Screen* screen) {
+    static float rotation = 0.f;
+    rotation += 10.f * deltaTime;
+    
+    for(int i=0; i < obj.triangles.size(); ++i) {
+        auto& triangle = obj.triangles[i];
+
+        Vector3f mp1 = *(Vector3f*)&(triangle.v1.point);
+        Vector3f mp2 = *(Vector3f*)&(triangle.v2.point);
+        Vector3f mp3 = *(Vector3f*)&(triangle.v3.point);
+        
+        // Scale -> Rotate -> Translate
+        Vector3f wp1 = mp1 * 2.f;
+        Vector3f wp2 = mp2 * 2.f;
+        Vector3f wp3 = mp3 * 2.f;
+
+        wp1 = wp1.rotate_y(rotation);
+        wp2 = wp2.rotate_y(rotation);
+        wp3 = wp3.rotate_y(rotation);
+
+        wp1 = wp1 - Vector3f{0, 0, 5};
+        wp2 = wp2 - Vector3f{0, 0, 5};
+        wp3 = wp3 - Vector3f{0, 0, 5};
+        
+        Vector2i sp1 = camera->worldToScreenSpace(wp1);
+        Vector2i sp2 = camera->worldToScreenSpace(wp2);
+        Vector2i sp3 = camera->worldToScreenSpace(wp3);
+
+        ScanlineRasterizer::rasterize(sp1, sp2, sp3, GREEN, screen);
+    }
+}
+
 
 void Scene::Update(float delta_time) 
 { 
@@ -114,7 +147,9 @@ void Scene::Update(float delta_time)
 
     //draw_quad(_quad, _camera, _screen);
 
-    draw_suzanne(_suzanne, true, delta_time, _camera, _screen);
+    //draw_suzanne(_suzanne, false, delta_time, _camera, _screen);
+
+    draw_suzanne_scanline(_suzanne, delta_time, _camera, _screen);
 
     _screen->blit();
 }
