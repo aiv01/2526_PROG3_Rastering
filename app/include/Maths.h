@@ -11,6 +11,8 @@ struct Vector3f {
     float z;
 
     Vector3f operator-(const Vector3f& other) const;
+    Vector3f operator*(float scalar) const;
+    Vector3f rotate_y(float angleDegrees) const;
 };
 
 namespace Maths {

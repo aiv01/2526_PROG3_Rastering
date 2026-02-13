@@ -1,10 +1,24 @@
 #include "Maths.h"
 #include <algorithm>
+#include <math.h>
 
 Vector3f Vector3f::operator-(const Vector3f& other) const {
     return {x - other.x, y - other.y, z - other.z};
 }
 
+Vector3f Vector3f::operator*(float scalar) const {
+    return {x * scalar, y * scalar, z * scalar};
+}
+
+Vector3f Vector3f::rotate_y(float angleDegrees) const {
+    float rads = angleDegrees * Maths::PI2 / 180.f;
+
+    Vector3f result;
+    result.x = cosf(rads) * x - sinf(rads) * z;
+    result.y = y;
+    result.z = sinf(rads) * x + cosf(rads) * z;
+    return result;
+}
 
 namespace Maths {
 

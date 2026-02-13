@@ -1,6 +1,7 @@
 #pragma once
 #include "Screen.h"
 #include "Camera.h"
+#include "ObjParser.h"
 
 class Scene {
 public:
@@ -9,4 +10,7 @@ public:
     void Destroy();
     Screen* _screen;
     ACamera* _camera;
+
+    Obj _quad;
+    Obj _suzanne;
 };
