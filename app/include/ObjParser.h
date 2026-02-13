@@ -1,8 +1,26 @@
 #pragma once
 #include <string>
-#include <vector>
 #include <fstream>
-#include<iostream>
+#include <vector>
+
+class Tokenizer
+{
+public:
+
+    static std::vector<std::string> Split(const std::string& stringToSplit, char separator)
+    {
+        std::vector<std::string> tokens;
+        size_t end;
+        size_t start = 0;
+        while((end = stringToSplit.find(separator, start)) != std::string::npos)
+        {
+            tokens.push_back(stringToSplit.substr(start, end-start));
+            start = end + 1;
+        }
+        tokens.push_back(stringToSplit.substr(start));
+        return tokens;
+    }
+};
 
 struct Float3
 {
@@ -17,7 +35,6 @@ struct Float2
     float y;
 };
 
-
 struct Vertex
 {
     Float3 point;
@@ -29,147 +46,119 @@ struct Triangle
 {
     Vertex v1;
     Vertex v2;
-    Vertex v3; 
+    Vertex v3;
 };
 
-struct MeshObj
+struct Obj 
 {
     std::vector<Triangle> triangles;
 };
 
-class Tokenizer
-{
-    private:
-    Tokenizer(){}
-
-    public:
-    static std::vector<std::string> Split(const std::string &line, char separator)
-    {
-        std::vector<std::string> tokens;
-
-        size_t end;
-        size_t start = 0;
-
-        std::string sep {separator};
-      
-        while((end = line.find(sep, start)) != std::string::npos)
-        {
-            tokens.push_back(line.substr(start, end-start));
-            start = end + 1;
-        }
-        tokens.push_back(line.substr(start));
-
-        return tokens;
-    }
-
-};
 
 class ObjParser
-{ 
-    private:
-    ObjParser(){}
+{
+public:
+    ObjParser() = delete;
 
-    public:
-    static bool TryParse(const std::string &path, MeshObj &outObj)
+    static bool TryParse(const std::string& objPath, Obj& outObj)
     {
-        std::ifstream file(path);
-        if(!file.is_open()) return false;
-
-        outObj = MeshObj{};
+        std::ifstream file(objPath);
+        if (!file.is_open()) return false;
         std::string line;
-
         std::vector<Float3> points;
-        std::vector<Float3> normals;
         std::vector<Float2> uvs;
-        
-
-
-        while(std::getline(file,line)) // return true if file is readable
+        std::vector<Float3> normals;
+        while(std::getline(file, line)) 
         {
-            if(line.empty())
-            {
-                continue;
-            }
+            if (line.empty()) continue;
+            auto tokens = Tokenizer::Split(line, ' ');
+            if (tokens.empty()) continue;
+            const std::string& type = tokens[0];
 
-            auto tokens = Tokenizer::Split(line,' ');
-
-            if(tokens[0] == "v") // starts parsing data from "v" tokens
+            if(type == "v")
             {
+                if(tokens.size() != 4) return false;
+
                 Float3 v;
-                try
-                {
-                    v.x = std::stof(tokens[1]); // using stof (string to float) is better, because throws an exception error and aborts the program
-                    v.y = std::stof(tokens[2]);
-                    v.z = std::stof(tokens[3]); 
-                    //atof -> converts string to float ( c type, no exceptions )
-                    //atoi -> converts string to int   ( c type, no exceptions )
 
-                }
-                catch(const std::exception& e)
-                {
+                try{
+
+                    v.x = std::stof(tokens[1]);
+                    v.y = std::stof(tokens[2]);
+                    v.z = std::stof(tokens[3]);
+
+                } catch (const std::exception&){
+
                     return false;
                 }
-
                 points.push_back(v);
-                
             }
-
-            else if(tokens[0] == "vt") // starts parsing data from "vt" tokens
+            else if(type == "vt")
             {
+                if(tokens.size() != 3) return false;
+
                 Float2 vt;
-                try
-                {
-                    vt.x = std::stof(tokens[1]); 
+                try{
+
+                    vt.x = std::stof(tokens[1]);
                     vt.y = std::stof(tokens[2]);
 
-                }
-                catch(const std::exception& e)
-                {
+                } catch (const std::exception&){
+
                     return false;
                 }
-
                 uvs.push_back(vt);
-                
             }
-
-            else if(tokens[0] == "vn") // starts parsing data from "vn" tokens
+            else if(type == "vn")
             {
-                Float3 vn;
-                try
-                {
-                    vn.x = std::stof(tokens[1]); 
-                    vn.y = std::stof(tokens[2]);
-                    vn.y = std::stof(tokens[3]);
+                if(tokens.size() != 4) return false;
 
-                }
-                catch(const std::exception& e)
-                {
+                Float3 vn;
+                try{
+
+                    vn.x = std::stof(tokens[1]);
+                    vn.y = std::stof(tokens[2]);
+                    vn.z = std::stof(tokens[3]);
+
+                } catch (const std::exception&){
+
                     return false;
                 }
-
                 normals.push_back(vn);
-                
             }
-            
+            else if(type == "f")
+            {
+                if(tokens.size() != 4) return false;
 
-        }                              
-        
+                Triangle triangle;
+                Vertex* vertexPointers[] = { &triangle.v1, &triangle.v2, &triangle.v3 };
+                for(size_t i = 0; i < 3; ++i)
+                {
+                    auto faceTokens = Tokenizer::Split(tokens[i + 1], '/');
+                    try{
 
-        return true;
+                        int pointIndex = std::stoi(faceTokens[0]) - 1;
+                        if (pointIndex < 0 || pointIndex >= points.size()) return false;
+                        int uvIndex = std::stoi(faceTokens[1]) - 1;
+                        if(uvIndex < 0 || uvIndex >= uvs.size()) return false;
+                        int normalIndex = std::stoi(faceTokens[2]) - 1;
+                        if(normalIndex < 0 || normalIndex >= normals.size())return false;
+
+                        vertexPointers[i]->point = points[pointIndex];
+                        vertexPointers[i]->uv = uvs[uvIndex];
+                        vertexPointers[i]->normal = normals[normalIndex];
+                        
+                    } catch (const std::exception&){
+
+                        return false;
+                    }
+
+                }
+
+                outObj.triangles.push_back(triangle);
+            }
+
+        }
+        return !outObj.triangles.empty();
     }
-
-
-
-    
-    
 };
-
-
-
-
-
-
-
-
-
-
