@@ -19,7 +19,7 @@ void ShapeRasterizer::dda_line_raster(int x1, int y1, int x2, int y2, Color colo
     for(int i=0; i <= steps; ++i) {
 
         //DrawPixel((int)x, (int)y, color);
-        screen->put_pixel((int)x, (int)y, color);
+        screen->put_pixel((int)x, (int)y, 0, color);
         x += steps_x;
         y += steps_y;
     }
@@ -40,7 +40,7 @@ void ShapeRasterizer::bbox_triangle_raster(Vector2i p1, Vector2i p2, Vector2i p3
             Vector2i point{x, y};
             if (bbox_is_point_in_triangle(point, p1, p2, p3)) 
             {
-                screen->put_pixel(x, y, color);
+                screen->put_pixel(x, y, 0, color);
             }
         }
     }

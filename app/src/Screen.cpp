@@ -1,4 +1,5 @@
 #include "Screen.h"
+#include <limits>
 
 Screen::Screen(int w, int h) 
     //: _width(w), _height(h)
@@ -6,6 +7,7 @@ Screen::Screen(int w, int h)
     _width = w;
     _height = h;
     _color_buffer.resize(w * h);
+    _depth_buffer.resize(w * h);
 
     Image img = {
         _color_buffer.data(),
@@ -23,12 +25,18 @@ Screen::~Screen()
     UnloadTexture(_texture);
 }
 
-void Screen::put_pixel(int x, int y, Color color) 
+void Screen::put_pixel(int x, int y, float z, Color color) 
 {
     if (x < 0 || x >= _width) return;
     if (y < 0 || y >= _height) return;
 
-    _color_buffer[y * _width + x] = color;
+    int index = y * _width + x;
+
+    float prev_z = _depth_buffer[index];
+    if (prev_z > z) return;
+    
+    _depth_buffer[index] = z;
+    _color_buffer[index] = color;
 }
 
 void Screen::blit() 
@@ -40,4 +48,5 @@ void Screen::blit()
 void Screen::clear() 
 {
    std::fill(_color_buffer.begin(), _color_buffer.end(), BLACK);
+   std::fill(_depth_buffer.begin(), _depth_buffer.end(), std::numeric_limits<float>().lowest());
 }

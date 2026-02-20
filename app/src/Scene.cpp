@@ -102,7 +102,26 @@ void draw_suzanne_scanline(Obj& obj, float deltaTime, ACamera* camera, Screen* s
         Vector2i sp2 = camera->worldToScreenSpace(wp2);
         Vector2i sp3 = camera->worldToScreenSpace(wp3);
 
-        ScanlineRasterizer::rasterize(sp1, sp2, sp3, GREEN, screen);
+        Vector3f cp1 = camera->worldToCameraSpace(wp1);
+        Vector3f cp2 = camera->worldToCameraSpace(wp2);
+        Vector3f cp3 = camera->worldToCameraSpace(wp3);
+
+        GpuVertex v1;
+        v1.screen_pos = sp1;
+        v1.color = RED;
+        v1.z_pos = cp1.z;
+
+        GpuVertex v2;
+        v2.screen_pos = sp2;
+        v2.color = GREEN;
+        v2.z_pos = cp2.z;
+
+        GpuVertex v3;
+        v3.screen_pos = sp3;
+        v3.color = BLUE;
+        v3.z_pos = cp3.z;
+
+        ScanlineRasterizer::rasterize(v1, v2, v3, screen);
     }
 }
 

@@ -9,7 +9,7 @@ PerspectiveCamera::PerspectiveCamera(int screenWidth, int screenHeight, float fo
 }
 
 Vector2i PerspectiveCamera::worldToScreenSpace(Vector3f worldPoint) {
-    Vector3f cameraPoint = worldPoint - _position;
+    Vector3f cameraPoint = worldToCameraSpace(worldPoint);
 
     float planeX = cameraPoint.x / -cameraPoint.z;
     float planeY = cameraPoint.y / -cameraPoint.z;
@@ -30,6 +30,10 @@ Vector2i PerspectiveCamera::worldToScreenSpace(Vector3f worldPoint) {
     return {screenX, screenY};
 }
 
+Vector3f PerspectiveCamera::worldToCameraSpace(Vector3f worldPoint) {
+    Vector3f cameraPoint = worldPoint - _position;
+    return cameraPoint;
+}
 
 OrthographicCamera::OrthographicCamera(int screenWidth, int screenHeight, float orthoSize) 
     : _screenWidth(screenWidth), _screenHeight(screenHeight), _orthoSize(orthoSize), _position({0, 0, 0})
@@ -38,7 +42,7 @@ OrthographicCamera::OrthographicCamera(int screenWidth, int screenHeight, float 
 }
 
 Vector2i OrthographicCamera::worldToScreenSpace(Vector3f worldPoint) {
-    Vector3f cameraPoint = worldPoint - _position;
+    Vector3f cameraPoint = worldToCameraSpace(worldPoint);
 
     float planeX = cameraPoint.x / _orthoSize;
     float planeY = cameraPoint.y / _orthoSize;
@@ -50,4 +54,9 @@ Vector2i OrthographicCamera::worldToScreenSpace(Vector3f worldPoint) {
     int screenY = (int)( (1.f - (planeY + 1.f) * 0.5f) * (float)_screenHeight);
 
     return {screenX, screenY};
+}
+
+Vector3f OrthographicCamera::worldToCameraSpace(Vector3f worldPoint) {
+    Vector3f cameraPoint = worldPoint - _position;
+    return cameraPoint;
 }
