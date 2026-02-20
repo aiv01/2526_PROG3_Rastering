@@ -3,23 +3,32 @@
 #include <array>
 #include "raylib.h"
 #include <stdint.h>
+#include <iostream>
 
 float interpolate_scalar(float a, float b, float gradient) 
 {
     return a + gradient * (b - a);
 }
 
-Color interpolate_color(const Color& a, const Color& b, float gradient) 
+Vector2f interpolate_vector2f(const Vector2f& a, const Vector2f& b, float gradient) 
 {
-    Color result;
-    result.r = (uint8_t)( (float)a.r + gradient * (float)(b.r - a.r) );
-    result.g = (uint8_t)( (float)a.g + gradient * (float)(b.g - a.g) );
-    result.b = (uint8_t)( (float)a.b + gradient * (float)(b.b - a.b) );
-    result.a = (uint8_t)( (float)a.a + gradient * (float)(b.a - a.a) );
+    Vector2f result;
+    result.x = interpolate_scalar(a.x, b.x, gradient);
+    result.y = interpolate_scalar(a.y, b.y, gradient);
     return result;
 }
 
-void rasterize_row(int y, 
+Color interpolate_color(const Color& a, const Color& b, float gradient) 
+{
+    Color result;
+    result.r = static_cast<uint8_t>(interpolate_scalar(a.r, b.r, gradient));
+    result.g = static_cast<uint8_t>(interpolate_scalar(a.g, b.g, gradient));
+    result.b = static_cast<uint8_t>(interpolate_scalar(a.b, b.b, gradient));
+    result.a = static_cast<uint8_t>(interpolate_scalar(a.a, b.a, gradient));
+    return result;
+}
+
+void rasterize_row(const Gpu& gpu, int y, 
                    const GpuVertex& left_edge_v1, const GpuVertex& left_edge_v2,
                    const GpuVertex& right_edge_v1, const GpuVertex& right_edge_v2,
                    Screen* screen) 
@@ -39,14 +48,19 @@ void rasterize_row(int y,
         right_gradient_y =  float(y - right_edge_sp1.y) / (float)(right_edge_sp2.y - right_edge_sp1.y);
     }
 
-    int left_x = (int) ((float)left_edge_sp1.x + left_gradient_y * (float)(left_edge_sp2.x - left_edge_sp1.x));
-    int right_x = (int) ((float)right_edge_sp1.x + right_gradient_y * (float)(right_edge_sp2.x - right_edge_sp1.x));
+    //int left_x = (int) ((float)left_edge_sp1.x + left_gradient_y * (float)(left_edge_sp2.x - left_edge_sp1.x));
+    //int right_x = (int) ((float)right_edge_sp1.x + right_gradient_y * (float)(right_edge_sp2.x - right_edge_sp1.x));
+    int left_x = interpolate_scalar(left_edge_sp1.x, left_edge_sp2.x, left_gradient_y);
+    int right_x = interpolate_scalar(right_edge_sp1.x, right_edge_sp2.x, right_gradient_y);
 
     Color left_color = interpolate_color(left_edge_v1.color, left_edge_v2.color, left_gradient_y);
     Color right_color = interpolate_color(right_edge_v1.color, right_edge_v2.color, right_gradient_y);
 
     float left_z = interpolate_scalar(left_edge_v1.z_pos, left_edge_v2.z_pos, left_gradient_y);
     float right_z = interpolate_scalar(right_edge_v1.z_pos, right_edge_v2.z_pos, right_gradient_y);
+
+    Vector2f left_uv = interpolate_vector2f(left_edge_v1.uv, left_edge_v2.uv, left_gradient_y);
+    Vector2f right_uv = interpolate_vector2f(right_edge_v1.uv, right_edge_v2.uv, right_gradient_y);
 
     for(int x = left_x; x <= right_x; ++x) {
         
@@ -57,13 +71,31 @@ void rasterize_row(int y,
 
         Color sample_color = interpolate_color(left_color, right_color, gradient_x);
         float sample_z = interpolate_scalar(left_z, right_z, gradient_x);
+        Vector2f sample_uv = interpolate_vector2f(left_uv, right_uv, gradient_x);
+
+        TextureCpu* texture = gpu.texture;
+        
+        int text_x = (int) ( (float)texture->width * sample_uv.x);
+        int text_y = (int) ((float)texture->height * sample_uv.y);
+
+        //std::cout << "Texel: "  << text_x << ", " << text_y << "\n";
+
+        int text_index = (text_y * texture->width + text_x) * texture->pixel_size;
+        
+        int y1 = 250;
+        int x1 = 250;
+        //text_index = (y1 * 500 + x1 ) * 4;
+
+        sample_color.r = texture->pixels[text_index + 0];
+        sample_color.g = texture->pixels[text_index + 1];
+        sample_color.b = texture->pixels[text_index + 2];
+        sample_color.a = texture->pixels[text_index + 3];
 
         screen->put_pixel(x, y, sample_z, sample_color);
     }
 }
 
-
-void ScanlineRasterizer::rasterize(const GpuVertex& v1, const GpuVertex& v2, const GpuVertex& v3, Screen* screen) 
+void ScanlineRasterizer::rasterize(const Gpu& gpu, const GpuVertex& v1, const GpuVertex& v2, const GpuVertex& v3, Screen* screen) 
 {
     std::array<std::reference_wrapper<const GpuVertex>, 3> points = {v1, v2, v3};
     std::sort(points.begin(), points.end(), [](const GpuVertex& p1, const GpuVertex& p2) {
@@ -87,17 +119,17 @@ void ScanlineRasterizer::rasterize(const GpuVertex& v1, const GpuVertex& v2, con
     if (inv_slope_p1p2 < inv_slope_p1p3) {
         for(int y = p1s.y; y <= p3s.y; ++y) {
             if (y < p2s.y) {
-                rasterize_row(y, v1s,v2s, v1s,v3s, screen);
+                rasterize_row(gpu, y, v1s,v2s, v1s,v3s, screen);
             } else {
-                rasterize_row(y, v2s,v3s, v1s,v3s, screen);
+                rasterize_row(gpu, y, v2s,v3s, v1s,v3s, screen);
             }
         }
     } else { // |>
         for(int y = p1s.y; y <= p3s.y; ++y) { 
             if (y < p2s.y) {
-                rasterize_row(y, v1s,v3s, v1s,v2s, screen);
+                rasterize_row(gpu, y, v1s,v3s, v1s,v2s, screen);
             } else {
-                rasterize_row(y, v1s,v3s, v2s,v3s, screen);
+                rasterize_row(gpu, y, v1s,v3s, v2s,v3s, screen);
             }
         }
     }

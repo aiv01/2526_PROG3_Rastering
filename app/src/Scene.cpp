@@ -4,6 +4,7 @@
 #include "ShapeRasterizer.h"
 #include "ObjParser.h"
 #include "ScanlineRasterizer.h"
+#include <stdio.h>
 
 Scene::Scene(int w, int h) 
 { 
@@ -13,6 +14,19 @@ Scene::Scene(int w, int h)
 
     ObjParser::TryParse("resources/quad.obj", _quad);
     ObjParser::TryParse("resources/suzanne.obj", _suzanne);
+
+    _smile_texture = TextureCpu::load_from_file("resources/smile.png");
+
+    int y = 250;
+    int x = 250;
+    int index = (y * 500 + x ) * 4;
+    uint8_t r = _smile_texture->pixels[index + 0];
+    uint8_t g = _smile_texture->pixels[index + 1];
+    uint8_t b = _smile_texture->pixels[index + 2];
+    uint8_t a = _smile_texture->pixels[index + 3];
+    printf("pixel: %d, %d, %d, %d,", r, g, b, a);
+
+    printf("image size: %llu", _smile_texture->pixels.size());
 }
 
 void draw_quad(Obj& obj, ACamera* camera, Screen* screen) {
@@ -75,6 +89,8 @@ void draw_suzanne(Obj& obj, bool wireframe, float deltaTime, ACamera* camera, Sc
 }
 
 void draw_suzanne_scanline(Obj& obj, float deltaTime, ACamera* camera, Screen* screen) {
+    Gpu gpu;
+
     static float rotation = 0.f;
     rotation += 10.f * deltaTime;
     
@@ -121,7 +137,52 @@ void draw_suzanne_scanline(Obj& obj, float deltaTime, ACamera* camera, Screen* s
         v3.color = BLUE;
         v3.z_pos = cp3.z;
 
-        ScanlineRasterizer::rasterize(v1, v2, v3, screen);
+        ScanlineRasterizer::rasterize(gpu, v1, v2, v3, screen);
+    }
+}
+
+void draw_quad_texturized(Obj& obj, TextureCpu* texture, ACamera* camera, Screen* screen) {    
+    Gpu gpu;
+    gpu.texture = texture;
+    
+    for(int i=0; i < obj.triangles.size(); ++i) {
+        auto& triangle = obj.triangles[i];
+
+        Vector3f mp1 = *(Vector3f*)&(triangle.v1.point);
+        Vector3f mp2 = *(Vector3f*)&(triangle.v2.point);
+        Vector3f mp3 = *(Vector3f*)&(triangle.v3.point);
+        
+        Vector3f wp1 = mp1 - Vector3f{0, 0, 4};
+        Vector3f wp2 = mp2 - Vector3f{0, 0, 4};
+        Vector3f wp3 = mp3 - Vector3f{0, 0, 4};
+        
+        Vector2i sp1 = camera->worldToScreenSpace(wp1);
+        Vector2i sp2 = camera->worldToScreenSpace(wp2);
+        Vector2i sp3 = camera->worldToScreenSpace(wp3);
+
+        Vector3f cp1 = camera->worldToCameraSpace(wp1);
+        Vector3f cp2 = camera->worldToCameraSpace(wp2);
+        Vector3f cp3 = camera->worldToCameraSpace(wp3);
+
+        GpuVertex v1;
+        v1.screen_pos = sp1;
+        v1.color = RED;
+        v1.z_pos = cp1.z;
+        v1.uv = *reinterpret_cast<Vector2f*>(&triangle.v1.uv);
+
+        GpuVertex v2;
+        v2.screen_pos = sp2;
+        v2.color = GREEN;
+        v2.z_pos = cp2.z;
+        v2.uv = *reinterpret_cast<Vector2f*>(&triangle.v2.uv);
+
+        GpuVertex v3;
+        v3.screen_pos = sp3;
+        v3.color = BLUE;
+        v3.z_pos = cp3.z;
+        v3.uv = *reinterpret_cast<Vector2f*>(&triangle.v3.uv);
+
+        ScanlineRasterizer::rasterize(gpu, v1, v2, v3, screen);
     }
 }
 
@@ -143,15 +204,15 @@ void Scene::Update(float delta_time)
     x2 += (speed * delta_time);
     y2 += (speed * delta_time);
     
-    ShapeRasterizer::dda_line_raster((int)0, (int)0, (int)x2, (int)y2, RED, _screen);
+    //ShapeRasterizer::dda_line_raster((int)0, (int)0, (int)x2, (int)y2, RED, _screen);
 
     // triangle by 3 edges
-    ShapeRasterizer::dda_line_raster(50, 200, 150, 200, GREEN, _screen);
-    ShapeRasterizer::dda_line_raster(50, 200, 100, 50, GREEN, _screen);
-    ShapeRasterizer::dda_line_raster(150, 200, 100, 50, GREEN, _screen);
+    //ShapeRasterizer::dda_line_raster(50, 200, 150, 200, GREEN, _screen);
+    //ShapeRasterizer::dda_line_raster(50, 200, 100, 50, GREEN, _screen);
+    //ShapeRasterizer::dda_line_raster(150, 200, 100, 50, GREEN, _screen);
 
     // triangle with bbox
-    ShapeRasterizer::bbox_triangle_raster({50, 200}, {150, 200}, {100, 50}, BLUE, _screen);
+    //ShapeRasterizer::bbox_triangle_raster({50, 200}, {150, 200}, {100, 50}, BLUE, _screen);
 
     // Triangle in WorldSpace
     Vector3f wp1{0.f, 0.f, -10.f};
@@ -162,13 +223,15 @@ void Scene::Update(float delta_time)
     Vector2i sp2 = _camera->worldToScreenSpace(wp2);
     Vector2i sp3 = _camera->worldToScreenSpace(wp3);
 
-    ShapeRasterizer::bbox_triangle_raster(sp1, sp2, sp3, RED, _screen);
+    //ShapeRasterizer::bbox_triangle_raster(sp1, sp2, sp3, RED, _screen);
 
     //draw_quad(_quad, _camera, _screen);
 
     //draw_suzanne(_suzanne, false, delta_time, _camera, _screen);
 
-    draw_suzanne_scanline(_suzanne, delta_time, _camera, _screen);
+    //draw_suzanne_scanline(_suzanne, delta_time, _camera, _screen);
+
+    draw_quad_texturized(_quad, _smile_texture, _camera, _screen);
 
     _screen->blit();
 }
@@ -177,5 +240,6 @@ void Scene::Destroy()
 { 
     delete _screen;
     delete _camera;
+    delete _smile_texture;
 }
 

@@ -5,6 +5,11 @@ struct Vector2i {
     int y;
 };
 
+struct Vector2f {
+    float x;
+    float y;
+};
+
 struct Vector3f {
     float x;
     float y;

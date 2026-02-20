@@ -2,6 +2,7 @@
 #include "Screen.h"
 #include "Camera.h"
 #include "ObjParser.h"
+#include "TextureCpu.h"
 
 class Scene {
 public:
@@ -13,4 +14,6 @@ public:
 
     Obj _quad;
     Obj _suzanne;
+
+    TextureCpu* _smile_texture;
 };
