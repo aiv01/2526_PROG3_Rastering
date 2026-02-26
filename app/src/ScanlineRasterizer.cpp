@@ -77,8 +77,8 @@ void rasterize_row(const Gpu& gpu, int y,
         
         //int text_x = (int) ((float)texture->width * sample_uv.x);
         //int text_y = (int) ((float)texture->height * sample_uv.y);
-        int text_x = (int) ((float)(texture->width - 1) * sample_uv.x);
-        int text_y = (int) ((float)(texture->height - 1) * (1.f - sample_uv.y));
+        int text_x = static_cast<int>(static_cast<float>(texture->width - 1) * sample_uv.x);
+        int text_y = static_cast<int>(static_cast<float>(texture->height - 1) * (1.f - sample_uv.y));
 
         int text_index = (text_y * texture->width + text_x) * texture->pixel_size;
 
