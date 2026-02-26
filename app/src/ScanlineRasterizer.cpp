@@ -75,16 +75,12 @@ void rasterize_row(const Gpu& gpu, int y,
 
         TextureCpu* texture = gpu.texture;
         
-        int text_x = (int) ( (float)texture->width * sample_uv.x);
-        int text_y = (int) ((float)texture->height * sample_uv.y);
-
-        //std::cout << "Texel: "  << text_x << ", " << text_y << "\n";
+        //int text_x = (int) ((float)texture->width * sample_uv.x);
+        //int text_y = (int) ((float)texture->height * sample_uv.y);
+        int text_x = (int) ((float)(texture->width - 1) * sample_uv.x);
+        int text_y = (int) ((float)(texture->height - 1) * (1.f - sample_uv.y));
 
         int text_index = (text_y * texture->width + text_x) * texture->pixel_size;
-        
-        int y1 = 250;
-        int x1 = 250;
-        //text_index = (y1 * 500 + x1 ) * 4;
 
         sample_color.r = texture->pixels[text_index + 0];
         sample_color.g = texture->pixels[text_index + 1];
