@@ -9,7 +9,7 @@ public:
     ~Screen();
     void put_pixel(int x, int y, float z, Color color);
     void blit();
-    void clear();
+    void clear(Color color);
 
 private:
     int _width;

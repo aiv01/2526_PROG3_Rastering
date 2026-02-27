@@ -4,8 +4,15 @@
 #include "Screen.h"
 #include "TextureCpu.h"
 
+enum GpuDrawMode {
+    NONE,
+    COLOR,
+    TEXTURE
+};
+
 struct Gpu {
     TextureCpu* texture;
+    GpuDrawMode mode;
 };
 
 struct GpuVertex

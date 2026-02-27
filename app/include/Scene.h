@@ -14,6 +14,8 @@ public:
 
     Obj _quad;
     Obj _suzanne;
+    Obj _trup;
 
     TextureCpu* _smile_texture;
+    TextureCpu* _trup_texture;
 };

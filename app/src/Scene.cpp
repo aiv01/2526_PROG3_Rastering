@@ -14,19 +14,10 @@ Scene::Scene(int w, int h)
 
     ObjParser::TryParse("resources/quad.obj", _quad);
     ObjParser::TryParse("resources/suzanne.obj", _suzanne);
+    ObjParser::TryParse("resources/stormtrooper.obj", _trup);
 
     _smile_texture = TextureCpu::load_from_file("resources/smile.png");
-
-    int y = 250;
-    int x = 250;
-    int index = (y * 500 + x ) * 4;
-    uint8_t r = _smile_texture->pixels[index + 0];
-    uint8_t g = _smile_texture->pixels[index + 1];
-    uint8_t b = _smile_texture->pixels[index + 2];
-    uint8_t a = _smile_texture->pixels[index + 3];
-    printf("pixel: %d, %d, %d, %d,", r, g, b, a);
-
-    printf("image size: %llu", _smile_texture->pixels.size());
+    _trup_texture = TextureCpu::load_from_file("resources/stormtrooper.png");
 }
 
 void draw_quad(Obj& obj, ACamera* camera, Screen* screen) {
@@ -90,6 +81,7 @@ void draw_suzanne(Obj& obj, bool wireframe, float deltaTime, ACamera* camera, Sc
 
 void draw_suzanne_scanline(Obj& obj, float deltaTime, ACamera* camera, Screen* screen) {
     Gpu gpu;
+    gpu.mode = GpuDrawMode::COLOR;
 
     static float rotation = 0.f;
     rotation += 10.f * deltaTime;
@@ -143,6 +135,7 @@ void draw_suzanne_scanline(Obj& obj, float deltaTime, ACamera* camera, Screen* s
 
 void draw_quad_texturized(Obj& obj, TextureCpu* texture, ACamera* camera, Screen* screen) {    
     Gpu gpu;
+    gpu.mode = GpuDrawMode::TEXTURE;
     gpu.texture = texture;
     
     for(int i=0; i < obj.triangles.size(); ++i) {
@@ -186,11 +179,69 @@ void draw_quad_texturized(Obj& obj, TextureCpu* texture, ACamera* camera, Screen
     }
 }
 
+void draw_trup_texturized(Obj& obj, TextureCpu* texture, float deltaTime, ACamera* camera, Screen* screen) {
+    Gpu gpu;
+    gpu.mode = GpuDrawMode::TEXTURE;
+    gpu.texture = texture;
+
+    static float rotation = 0.f;
+    rotation += 10.f * deltaTime;
+    
+    for(int i=0; i < obj.triangles.size(); ++i) {
+        auto& triangle = obj.triangles[i];
+
+        Vector3f mp1 = *(Vector3f*)&(triangle.v1.point);
+        Vector3f mp2 = *(Vector3f*)&(triangle.v2.point);
+        Vector3f mp3 = *(Vector3f*)&(triangle.v3.point);
+        
+        // Scale -> Rotate -> Translate
+        float scale = 1.f;
+        Vector3f wp1 = mp1 * scale;
+        Vector3f wp2 = mp2 * scale;
+        Vector3f wp3 = mp3 * scale;
+
+        wp1 = wp1.rotate_y(rotation);
+        wp2 = wp2.rotate_y(rotation);
+        wp3 = wp3.rotate_y(rotation);
+
+        wp1 = wp1 - Vector3f{0, 1.8f, 4};
+        wp2 = wp2 - Vector3f{0, 1.8f, 4};
+        wp3 = wp3 - Vector3f{0, 1.8f, 4};
+        
+        Vector2i sp1 = camera->worldToScreenSpace(wp1);
+        Vector2i sp2 = camera->worldToScreenSpace(wp2);
+        Vector2i sp3 = camera->worldToScreenSpace(wp3);
+
+        Vector3f cp1 = camera->worldToCameraSpace(wp1);
+        Vector3f cp2 = camera->worldToCameraSpace(wp2);
+        Vector3f cp3 = camera->worldToCameraSpace(wp3);
+
+        GpuVertex v1;
+        v1.screen_pos = sp1;
+        v1.color = RED;
+        v1.z_pos = cp1.z;
+        v1.uv = *reinterpret_cast<Vector2f*>(&triangle.v1.uv);
+
+        GpuVertex v2;
+        v2.screen_pos = sp2;
+        v2.color = GREEN;
+        v2.z_pos = cp2.z;\
+        v2.uv = *reinterpret_cast<Vector2f*>(&triangle.v2.uv);
+
+        GpuVertex v3;
+        v3.screen_pos = sp3;
+        v3.color = BLUE;
+        v3.z_pos = cp3.z;
+        v3.uv = *reinterpret_cast<Vector2f*>(&triangle.v3.uv);
+
+        ScanlineRasterizer::rasterize(gpu, v1, v2, v3, screen);
+    }
+}
 
 void Scene::Update(float delta_time) 
 { 
     //dda_line_raster(100, 400, 400, 200, RED);
-    _screen->clear();
+    _screen->clear({128, 128, 128, 255});
 
     static float x1 = 50;
     static float y1 = 50;
@@ -231,7 +282,9 @@ void Scene::Update(float delta_time)
 
     //draw_suzanne_scanline(_suzanne, delta_time, _camera, _screen);
 
-    draw_quad_texturized(_quad, _smile_texture, _camera, _screen);
+    //draw_quad_texturized(_quad, _smile_texture, _camera, _screen);
+
+    draw_trup_texturized(_trup, _trup_texture, delta_time, _camera, _screen);
 
     _screen->blit();
 }
@@ -241,5 +294,6 @@ void Scene::Destroy()
     delete _screen;
     delete _camera;
     delete _smile_texture;
+    delete _trup_texture;
 }
 

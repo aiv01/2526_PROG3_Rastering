@@ -45,8 +45,8 @@ void Screen::blit()
     DrawTexture(_texture, 0, 0, WHITE);
 }
 
-void Screen::clear() 
+void Screen::clear(Color color) 
 {
-   std::fill(_color_buffer.begin(), _color_buffer.end(), BLACK);
+   std::fill(_color_buffer.begin(), _color_buffer.end(), color);
    std::fill(_depth_buffer.begin(), _depth_buffer.end(), std::numeric_limits<float>().lowest());
 }
