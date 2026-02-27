@@ -4,6 +4,7 @@
 #include "raylib.h"
 #include <stdint.h>
 #include <iostream>
+#include <cmath>
 
 float interpolate_scalar(float a, float b, float gradient) 
 {
@@ -15,6 +16,15 @@ Vector2f interpolate_vector2f(const Vector2f& a, const Vector2f& b, float gradie
     Vector2f result;
     result.x = interpolate_scalar(a.x, b.x, gradient);
     result.y = interpolate_scalar(a.y, b.y, gradient);
+    return result;
+}
+
+Vector3f interpolate_vector3f(const Vector3f& a, const Vector3f& b, float gradient) 
+{
+    Vector3f result;
+    result.x = interpolate_scalar(a.x, b.x, gradient);
+    result.y = interpolate_scalar(a.y, b.y, gradient);
+    result.z = interpolate_scalar(a.z, b.z, gradient);
     return result;
 }
 
@@ -69,6 +79,12 @@ void rasterize_row(const Gpu& gpu, int y,
         right_uv = interpolate_vector2f(right_edge_v1.uv, right_edge_v2.uv, right_gradient_y);
     }
 
+    Vector3f left_world_pos = interpolate_vector3f(left_edge_v1.world_pos, left_edge_v2.world_pos, left_gradient_y);
+    Vector3f right_world_pos = interpolate_vector3f(right_edge_v1.world_pos, right_edge_v2.world_pos, right_gradient_y);
+
+    Vector3f left_world_norm = interpolate_vector3f(left_edge_v1.world_norm, left_edge_v2.world_norm, left_gradient_y);
+    Vector3f right_world_norm = interpolate_vector3f(right_edge_v1.world_norm, right_edge_v2.world_norm, right_gradient_y);
+
     for(int x = left_x; x <= right_x; ++x) {
         
         float gradient_x = 1.f;
@@ -98,8 +114,45 @@ void rasterize_row(const Gpu& gpu, int y,
             sample_color.b = texture->pixels[text_index + 2];
             sample_color.a = texture->pixels[text_index + 3];
         }
+
+        XColor sample_xcolor = {sample_color.r, sample_color.g, sample_color.b, sample_color.a};
+
+        //Ambient
+        float ambient_intensity = 0.1f;
+        XColor ambient = sample_xcolor * ambient_intensity;
+
+        //Diffuse
+        Vector3f world_pos = interpolate_vector3f(left_world_pos, right_world_pos, gradient_x);
+        Vector3f world_norm = interpolate_vector3f(left_world_norm, right_world_norm, gradient_x);
+
+        Vector3f dir_to_light = gpu.point_light_pos - world_pos; // L
+        dir_to_light.normalize();
+        world_norm.normalize();
+
+        float cosLN = dir_to_light.dot(world_norm);
+        float lambert = std::clamp(cosLN, 0.f, 1.f);  //required C++17 added as configuration in cmake
+        XColor diffuse = sample_xcolor * lambert;
+
+        //Specular
+        Vector3f dir_to_eye = gpu.camera_pos - world_pos; // E
+        dir_to_eye.normalize();
+
+        Vector3f dir_light_to_point = dir_to_light * -1.f;
+        Vector3f light_refl = dir_light_to_point.reflect(world_norm);
+
+        float cosER = dir_to_eye.dot(light_refl);
+        float specular_value = std::clamp(cosER, 0.f, 1.f);
+        XColor specular_tint = {255, 255, 255, 255};
+        XColor specular = specular_tint * powf(specular_value, 50.f);
+
+        XColor phong = ambient + diffuse + specular;
         
-        screen->put_pixel(x, y, sample_z, sample_color);
+        //phong.r = std::clamp(phong.r, (uint8_t)0, (uint8_t)255);
+        //phong.g = std::clamp(phong.g, (uint8_t)0, (uint8_t)255);
+        //phong.b = std::clamp(phong.b, (uint8_t)0, (uint8_t)255);
+        //phong.a = std::clamp(phong.a, (uint8_t)0, (uint8_t)255);
+
+        screen->put_pixel(x, y, sample_z, {phong.r, phong.g, phong.b, phong.a});
     }
 }
 

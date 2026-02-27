@@ -20,6 +20,45 @@ Vector3f Vector3f::rotate_y(float angleDegrees) const {
     return result;
 }
 
+void Vector3f::normalize() {
+    float magn = magnitude();
+    x /= magn;
+    y /= magn;
+    z /= magn;
+}
+
+float Vector3f::magnitude() {
+    //return sqrtf( x * x + y * y + z * z );
+    return sqrtf( dot(*this) );
+}
+
+float Vector3f::dot(const Vector3f& other) const {
+    return x * other.x + y * other.y + z * other.z;
+}
+
+Vector3f Vector3f::reflect(const Vector3f& norm) const {
+    // R = I - 2 * dot(I,N) * N;
+    return *this - norm * (2.f * dot(norm));
+}
+
+XColor XColor::operator*(float scalar) const {
+    XColor c;
+    c.r = static_cast<uint8_t>(static_cast<float>(r) * scalar);
+    c.g = static_cast<uint8_t>(static_cast<float>(g) * scalar);
+    c.b = static_cast<uint8_t>(static_cast<float>(b) * scalar);
+    c.a = static_cast<uint8_t>(static_cast<float>(a) * scalar);
+    return c;
+}
+
+XColor XColor::operator+(const XColor& color) const {
+    XColor c;
+    c.r = r + color.r;
+    c.g = g + color.g;
+    c.b = b + color.b;
+    c.a = a + color.a;
+    return c;
+}
+
 namespace Maths {
 
     int min3(int a, int b, int c) 

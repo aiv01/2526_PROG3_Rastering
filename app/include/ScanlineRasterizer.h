@@ -13,6 +13,8 @@ enum GpuDrawMode {
 struct Gpu {
     TextureCpu* texture;
     GpuDrawMode mode;
+    Vector3f point_light_pos;
+    Vector3f camera_pos;
 };
 
 struct GpuVertex
@@ -21,6 +23,8 @@ struct GpuVertex
     Color color;
     float z_pos;
     Vector2f uv;
+    Vector3f world_pos;
+    Vector3f world_norm;
 };
 
 class ScanlineRasterizer {

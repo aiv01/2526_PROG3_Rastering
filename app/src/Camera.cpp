@@ -8,6 +8,10 @@ PerspectiveCamera::PerspectiveCamera(int screenWidth, int screenHeight, float fo
     _aspectRatio = (float)screenWidth / (float)screenHeight;
 }
 
+Vector3f PerspectiveCamera::getPosition() const {
+    return _position;
+}
+
 Vector2i PerspectiveCamera::worldToScreenSpace(Vector3f worldPoint) {
     Vector3f cameraPoint = worldToCameraSpace(worldPoint);
 
@@ -39,6 +43,10 @@ OrthographicCamera::OrthographicCamera(int screenWidth, int screenHeight, float 
     : _screenWidth(screenWidth), _screenHeight(screenHeight), _orthoSize(orthoSize), _position({0, 0, 0})
 {
     _aspectRatio = (float)screenWidth / (float)screenHeight;
+}
+
+Vector3f OrthographicCamera::getPosition() const {
+    return _position;
 }
 
 Vector2i OrthographicCamera::worldToScreenSpace(Vector3f worldPoint) {

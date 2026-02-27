@@ -1,4 +1,5 @@
 #pragma once
+#include <stdint.h>
 
 struct Vector2i {
     int x;
@@ -18,6 +19,22 @@ struct Vector3f {
     Vector3f operator-(const Vector3f& other) const;
     Vector3f operator*(float scalar) const;
     Vector3f rotate_y(float angleDegrees) const;
+
+    void normalize();
+    float magnitude();
+    float dot(const Vector3f& other) const;
+
+    Vector3f reflect(const Vector3f& norm) const;
+};
+
+struct XColor {
+    uint8_t r;
+    uint8_t g;
+    uint8_t b;
+    uint8_t a;
+
+    XColor operator*(float scalar) const;
+    XColor operator+(const XColor& color) const;
 };
 
 namespace Maths {

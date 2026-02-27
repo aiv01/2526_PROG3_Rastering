@@ -183,6 +183,8 @@ void draw_trup_texturized(Obj& obj, TextureCpu* texture, float deltaTime, ACamer
     Gpu gpu;
     gpu.mode = GpuDrawMode::TEXTURE;
     gpu.texture = texture;
+    gpu.point_light_pos = {3.f, 0.f, -4};
+    gpu.camera_pos = camera->getPosition();
 
     static float rotation = 0.f;
     rotation += 10.f * deltaTime;
@@ -216,23 +218,38 @@ void draw_trup_texturized(Obj& obj, TextureCpu* texture, float deltaTime, ACamer
         Vector3f cp2 = camera->worldToCameraSpace(wp2);
         Vector3f cp3 = camera->worldToCameraSpace(wp3);
 
+        //World Normal
+        Vector3f mn1 = *reinterpret_cast<Vector3f*>(&triangle.v1.normal);
+        Vector3f mn2 = *reinterpret_cast<Vector3f*>(&triangle.v2.normal);
+        Vector3f mn3 = *reinterpret_cast<Vector3f*>(&triangle.v3.normal);
+
+        Vector3f wn1 = mn1.rotate_y(rotation);
+        Vector3f wn2 = mn2.rotate_y(rotation);
+        Vector3f wn3 = mn3.rotate_y(rotation);
+
         GpuVertex v1;
         v1.screen_pos = sp1;
         v1.color = RED;
         v1.z_pos = cp1.z;
         v1.uv = *reinterpret_cast<Vector2f*>(&triangle.v1.uv);
+        v1.world_pos = wp1;
+        v1.world_norm = wn1;
 
         GpuVertex v2;
         v2.screen_pos = sp2;
         v2.color = GREEN;
         v2.z_pos = cp2.z;\
         v2.uv = *reinterpret_cast<Vector2f*>(&triangle.v2.uv);
+        v2.world_pos = wp2;
+        v2.world_norm = wn2;
 
         GpuVertex v3;
         v3.screen_pos = sp3;
         v3.color = BLUE;
         v3.z_pos = cp3.z;
         v3.uv = *reinterpret_cast<Vector2f*>(&triangle.v3.uv);
+        v3.world_pos = wp3;
+        v3.world_norm = wn3;
 
         ScanlineRasterizer::rasterize(gpu, v1, v2, v3, screen);
     }
