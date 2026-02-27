@@ -227,6 +227,9 @@ void draw_trup_texturized(Obj& obj, TextureCpu* texture, float deltaTime, ACamer
         Vector3f wn2 = mn2.rotate_y(rotation);
         Vector3f wn3 = mn3.rotate_y(rotation);
 
+
+        if (camera->isFaceCulled(cp1, cp2, cp3)) continue;
+
         GpuVertex v1;
         v1.screen_pos = sp1;
         v1.color = RED;

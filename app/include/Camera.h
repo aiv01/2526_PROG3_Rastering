@@ -7,8 +7,8 @@ public:
     virtual Vector2i worldToScreenSpace(Vector3f worldPoint) = 0;
     virtual Vector3f worldToCameraSpace(Vector3f worldPoint) = 0;
     virtual ~ACamera() = default;
-
     virtual Vector3f getPosition() const = 0;
+    virtual bool isFaceCulled(const Vector3f& p1, const Vector3f& p2, const Vector3f& p3) const = 0;
 };
 
 class PerspectiveCamera : public ACamera {
@@ -17,6 +17,7 @@ public:
     Vector2i worldToScreenSpace(Vector3f worldPoint) override;
     Vector3f worldToCameraSpace(Vector3f worldPoint) override;
     Vector3f getPosition() const override;
+    bool isFaceCulled(const Vector3f& p1, const Vector3f& p2, const Vector3f& p3) const override;
 private:
     int _screenHeight;
     int _screenWidth;
@@ -35,6 +36,7 @@ public:
     Vector2i worldToScreenSpace(Vector3f worldPoint) override;
     Vector3f worldToCameraSpace(Vector3f worldPoint) override;
     Vector3f getPosition() const override;
+    bool isFaceCulled(const Vector3f& p1, const Vector3f& p2, const Vector3f& p3) const override;
 private:
     int _screenHeight;
     int _screenWidth;

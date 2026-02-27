@@ -41,6 +41,14 @@ Vector3f Vector3f::reflect(const Vector3f& norm) const {
     return *this - norm * (2.f * dot(norm));
 }
 
+Vector3f Vector3f::cross(const Vector3f& other) const {
+    Vector3f r;
+    r.x = y * other.z - z * other.y;
+    r.y = z * other.x - x * other.z;
+    r.z = x * other.y - y * other.x;
+    return r;
+}
+
 XColor XColor::operator*(float scalar) const {
     XColor c;
     c.r = static_cast<uint8_t>(static_cast<float>(r) * scalar);

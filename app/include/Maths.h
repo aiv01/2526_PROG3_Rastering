@@ -25,6 +25,7 @@ struct Vector3f {
     float dot(const Vector3f& other) const;
 
     Vector3f reflect(const Vector3f& norm) const;
+    Vector3f cross(const Vector3f& other) const;
 };
 
 struct XColor {
