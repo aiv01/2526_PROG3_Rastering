@@ -181,7 +181,7 @@ void draw_quad_texturized(Obj& obj, TextureCpu* texture, ACamera* camera, Screen
 
 void draw_trup_texturized(Obj& obj, TextureCpu* texture, float deltaTime, ACamera* camera, Screen* screen) {
     Gpu gpu;
-    gpu.mode = GpuDrawMode::TEXTURE;
+    gpu.mode = GpuDrawMode::TEXTURE_VERTEX_COLOR;
     gpu.texture = texture;
     gpu.point_light_pos = {3.f, 0.f, -4};
     gpu.camera_pos = camera->getPosition();

@@ -48,7 +48,7 @@ Vector3f Vector3f::cross(const Vector3f& other) const {
     r.z = x * other.y - y * other.x;
     return r;
 }
-
+/*
 XColor XColor::operator*(float scalar) const {
     XColor c;
     c.r = static_cast<uint8_t>(static_cast<float>(r) * scalar);
@@ -65,6 +65,14 @@ XColor XColor::operator+(const XColor& color) const {
     c.b = b + color.b;
     c.a = a + color.a;
     return c;
+}
+*/
+XColor XColor::operator*(float scalar) const {
+    return { r * scalar, g * scalar, b * scalar, a * scalar};
+}
+
+XColor XColor::operator+(const XColor& color) const {
+    return { r + color.r, g + color.g,b + color.b, a +color.a };
 }
 
 namespace Maths {
