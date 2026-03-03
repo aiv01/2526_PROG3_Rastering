@@ -16,6 +16,7 @@ struct Gpu {
     GpuDrawMode mode;
     Vector3f point_light_pos;
     Vector3f camera_pos;
+    Color light_color;
 };
 
 struct GpuVertex

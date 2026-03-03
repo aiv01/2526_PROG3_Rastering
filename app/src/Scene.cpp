@@ -185,6 +185,7 @@ void draw_trup_texturized(Obj& obj, TextureCpu* texture, float deltaTime, ACamer
     gpu.texture = texture;
     gpu.point_light_pos = {3.f, 0.f, -4};
     gpu.camera_pos = camera->getPosition();
+    gpu.light_color = YELLOW;
 
     static float rotation = 0.f;
     rotation += 10.f * deltaTime;
@@ -213,6 +214,9 @@ void draw_trup_texturized(Obj& obj, TextureCpu* texture, float deltaTime, ACamer
         Vector2i sp1 = camera->worldToScreenSpace(wp1);
         Vector2i sp2 = camera->worldToScreenSpace(wp2);
         Vector2i sp3 = camera->worldToScreenSpace(wp3);
+        if (is_triangle_offscreen(sp1, sp2, sp3, screen->getWidth(), screen->getHeight())){
+            continue;//not sure if is working with cutted mesh is getting 40 fps , entire mesh get 23 fps
+        } 
 
         Vector3f cp1 = camera->worldToCameraSpace(wp1);
         Vector3f cp2 = camera->worldToCameraSpace(wp2);

@@ -131,10 +131,21 @@ void rasterize_row(const Gpu& gpu, int y,
         }
 
         XColor sample_xcolor = {(float)sample_color.r, (float)sample_color.g, (float)sample_color.b, (float)sample_color.a};
+        XColor light_x = {
+            (float)gpu.light_color.r,
+            (float)gpu.light_color.g,
+            (float)gpu.light_color.b,
+            255.f
+        };
+
 
         //Ambient
         float ambient_intensity = 0.1f;
         XColor ambient = sample_xcolor * ambient_intensity;
+        //apply light color to ambient (TODO CHANGE TO A FUNCTION)
+        ambient.r = ambient.r * (light_x.r / 255.f);
+        ambient.g = ambient.g * (light_x.g / 255.f);
+        ambient.b = ambient.b * (light_x.b / 255.f);
 
         //Diffuse
         Vector3f world_pos = interpolate_vector3f(left_world_pos, right_world_pos, gradient_x);
@@ -147,6 +158,10 @@ void rasterize_row(const Gpu& gpu, int y,
         float cosLN = dir_to_light.dot(world_norm);
         float lambert = std::clamp(cosLN, 0.f, 1.f);  //required C++17 added as configuration in cmake
         XColor diffuse = sample_xcolor * lambert;
+        //apply light color to diffusion (TODO CHANGE TO A FUNCTION)
+        diffuse.r = diffuse.r * (light_x.r / 255.f);
+        diffuse.g = diffuse.g * (light_x.g / 255.f);
+        diffuse.b = diffuse.b * (light_x.b / 255.f);
 
         //Specular
         Vector3f dir_to_eye = gpu.camera_pos - world_pos; // E
@@ -157,8 +172,11 @@ void rasterize_row(const Gpu& gpu, int y,
 
         float cosER = dir_to_eye.dot(light_refl);
         float specular_value = std::clamp(cosER, 0.f, 1.f);
-        XColor specular_tint = {255.f, 255.f, 255.f, 255.f};
+        //apply light color to specular (not white deault)
+        XColor specular_tint = light_x;
         XColor specular = specular_tint * powf(specular_value, 50.f);
+
+
 
         XColor phong = ambient + diffuse + specular;
         
