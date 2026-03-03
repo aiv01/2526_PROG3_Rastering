@@ -1,5 +1,7 @@
 #pragma once
 #include <stdint.h>
+#include <cmath>
+#include <algorithm>
 
 struct Vector2i {
     int x;
@@ -27,7 +29,7 @@ struct Vector3f {
     Vector3f reflect(const Vector3f& norm) const;
     Vector3f cross(const Vector3f& other) const;
 };
-
+/*
 struct XColor {
     uint8_t r;
     uint8_t g;
@@ -36,7 +38,24 @@ struct XColor {
 
     XColor operator*(float scalar) const;
     XColor operator+(const XColor& color) const;
+};*/
+struct XColor {
+    float r;
+    float g;
+    float b;
+    float a;
+
+    XColor operator*(float scalar) const;
+    XColor operator+(const XColor& color) const;
+    XColor operator*(const XColor& other) const;
 };
+
+
+// my cast and clamp function (inline return type to avoid multiple definition error : done at lesson with Prof Fattori)
+inline uint8_t to_u8(float v) {
+    v = std::clamp(v, 0.0f, 255.0f);
+    return static_cast<uint8_t>(v + 0.5f);
+}
 
 namespace Maths {
 

@@ -11,6 +11,9 @@ public:
     void blit();
     void clear(Color color);
 
+    int getWidth() const { return _width; }
+    int getHeight() const { return _height; }
+
 private:
     int _width;
     int _height;
