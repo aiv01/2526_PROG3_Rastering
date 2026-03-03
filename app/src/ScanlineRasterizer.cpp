@@ -130,22 +130,21 @@ void rasterize_row(const Gpu& gpu, int y,
             sample_color = ScanlineRasterizer::modulate_color_strength(texture_sample_color, vertex_sample_color,0.4);
         }
 
-        XColor sample_xcolor = {(float)sample_color.r, (float)sample_color.g, (float)sample_color.b, (float)sample_color.a};
+        XColor sample_xcolor = {(float)sample_color.r/255.f, (float)sample_color.g/255.f, (float)sample_color.b/255.f, (float)sample_color.a/255.f};
         XColor light_x = {
-            (float)gpu.light_color.r,
-            (float)gpu.light_color.g,
-            (float)gpu.light_color.b,
-            255.f
+            (float)gpu.light_color.r/255.f,
+            (float)gpu.light_color.g/255.f,
+            (float)gpu.light_color.b/255.f,
+            1.f
         };
 
 
         //Ambient
         float ambient_intensity = 0.1f;
-        XColor ambient = sample_xcolor * ambient_intensity;
         //apply light color to ambient (TODO CHANGE TO A FUNCTION)
-        ambient.r = ambient.r * (light_x.r / 255.f);
-        ambient.g = ambient.g * (light_x.g / 255.f);
-        ambient.b = ambient.b * (light_x.b / 255.f);
+        XColor ambient = (sample_xcolor * ambient_intensity) * light_x;
+        
+
 
         //Diffuse
         Vector3f world_pos = interpolate_vector3f(left_world_pos, right_world_pos, gradient_x);
@@ -157,11 +156,8 @@ void rasterize_row(const Gpu& gpu, int y,
 
         float cosLN = dir_to_light.dot(world_norm);
         float lambert = std::clamp(cosLN, 0.f, 1.f);  //required C++17 added as configuration in cmake
-        XColor diffuse = sample_xcolor * lambert;
         //apply light color to diffusion (TODO CHANGE TO A FUNCTION)
-        diffuse.r = diffuse.r * (light_x.r / 255.f);
-        diffuse.g = diffuse.g * (light_x.g / 255.f);
-        diffuse.b = diffuse.b * (light_x.b / 255.f);
+        XColor diffuse = (sample_xcolor * lambert) * light_x;
 
         //Specular
         Vector3f dir_to_eye = gpu.camera_pos - world_pos; // E
@@ -173,8 +169,7 @@ void rasterize_row(const Gpu& gpu, int y,
         float cosER = dir_to_eye.dot(light_refl);
         float specular_value = std::clamp(cosER, 0.f, 1.f);
         //apply light color to specular (not white deault)
-        XColor specular_tint = light_x;
-        XColor specular = specular_tint * powf(specular_value, 50.f);
+        XColor specular = light_x * powf(specular_value, 50.f);
 
 
 
@@ -185,10 +180,10 @@ void rasterize_row(const Gpu& gpu, int y,
         //phong.b = std::clamp(phong.b, (uint8_t)0, (uint8_t)255);
         //phong.a = std::clamp(phong.a, (uint8_t)0, (uint8_t)255);
         Color outColor;
-        outColor.r = to_u8(phong.r);
-        outColor.g = to_u8(phong.g);
-        outColor.b = to_u8(phong.b);
-        outColor.a = to_u8(phong.a);
+        outColor.r = to_u8(phong.r * 255.f);
+        outColor.g = to_u8(phong.g * 255.f);
+        outColor.b = to_u8(phong.b * 255.f);
+        outColor.a = to_u8(phong.a * 255.f);
 
         //screen->put_pixel(x, y, sample_z, {phong.r, phong.g, phong.b, phong.a});
         screen->put_pixel(x, y, sample_z, outColor);

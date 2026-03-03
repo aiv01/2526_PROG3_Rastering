@@ -70,6 +70,14 @@ XColor XColor::operator+(const XColor& color) const {
 XColor XColor::operator*(float scalar) const {
     return { r * scalar, g * scalar, b * scalar, a * scalar};
 }
+XColor XColor::operator*(const XColor& other) const {
+    return {
+        r * other.r,
+        g * other.g,
+        b * other.b,
+        a * other.a
+    };
+}
 
 XColor XColor::operator+(const XColor& color) const {
     return { r + color.r, g + color.g,b + color.b, a +color.a };

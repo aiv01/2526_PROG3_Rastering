@@ -47,7 +47,9 @@ struct XColor {
 
     XColor operator*(float scalar) const;
     XColor operator+(const XColor& color) const;
+    XColor operator*(const XColor& other) const;
 };
+
 
 // my cast and clamp function (inline return type to avoid multiple definition error : done at lesson with Prof Fattori)
 inline uint8_t to_u8(float v) {
